@@ -1,6 +1,7 @@
 // fxn for all of code to be responsive to window size
 function make_responsive() {
-    // pull width of parent container
+    
+    // set SVG width to width of parent container
     var svgWidth = document.getElementById('chartArea').clientWidth;
     var svgHeight = svgWidth / 1.5;
 
@@ -9,10 +10,6 @@ function make_responsive() {
     if (!svgArea.empty()) {
       svgArea.remove();
     }
-  
-    // determine SVG wrapper dimensions & margins
-    // var svgWidth = 900;
-    // var svgHeight = 600;
     
     var margin = {
       top: 50,
@@ -34,7 +31,7 @@ function make_responsive() {
     // append group element to SVG element
     var chartGroup = svg.append("g")
       .attr("transform", `translate(${margin.left}, ${margin.top})`);
-  
+
     // read CSV
     d3.csv("assets/data/data.csv").then((data) => {
   
@@ -42,6 +39,11 @@ function make_responsive() {
         data.forEach((d) => {
           d.poverty = +d.poverty;
           d.healthcare = +d.healthcare;
+          d.age = +d.age;
+          d.smokes = +d.smokes;
+          d.obesity = +d.obesity;
+          d.income = +d.income;
+          d.state = d.state;
         });
   
         // create scales
@@ -65,23 +67,46 @@ function make_responsive() {
         chartGroup.append("g")
           .call(yAxis);
   
-        // append circles
+        // append circles & state abbreviations
         var circlesGroup = chartGroup.selectAll("circle")
           .data(data)
           .enter()
-          .append("circle")
+          .append('g');
+        
+        var circlesFill = circlesGroup.append("circle")
           .attr("cx", d => xScale(d.poverty))
           .attr("cy", d => yScale(d.healthcare))
-          .attr("r", "10")
-          .attr("fill", "gold")
-          .attr("stroke-width", "1")
-          .attr("stroke", "black");
-  
+          .attr("r", "15")
+          .classed('stateCircle', true);
+        
+        var circlesText = circlesGroup.append('text')
+          .text(d => d.abbr)
+          .attr("dx", d => xScale(d.poverty))
+          .attr("dy", d => yScale(d.healthcare) + 5)
+          .classed('stateText', true);
+
+        // create axis labels
+        var xLabel = chartGroup.append('g')
+          .attr('transform', `translate(${width/2}, ${height})`)
+          .append('text')
+          .attr('x', 0)
+          .attr('y', 40)
+          .text('poverty rate (%)')
+          .classed('active', true);
+
+        var yLabel = chartGroup.append('g')
+          .append('text')
+          .attr('transform', 'rotate(-90)')
+          .attr('x', -(height/2))
+          .attr('y', -40)
+          .text('lacks healthcare (%)')
+          .classed('active', true);
+        
         // create tooltip
         var toolTip = d3.tip()
-          .attr("class", "tooltip")
-          .offset([80, -60])
-          .html((d) => (`poverty: ${d.poverty}<hr>healthcare: ${d.healthcare}`));
+          .attr("class", "d3-tip")
+          .offset([10, -80])
+          .html((d) => (`<strong>${d.state}</strong><br>poverty rate: ${d.poverty}%<br>lacks healthcare: ${d.healthcare}%`));
   
         chartGroup.call(toolTip);
   
